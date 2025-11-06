@@ -1,0 +1,238 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "tldraw/tldraw.css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Updated to match design brief color palette */
+  --background: #ffffff;
+  --foreground: #4b5563;
+  --card: #f9fafb;
+  --card-foreground: #374151;
+  --popover: #ffffff;
+  --popover-foreground: #4b5563;
+  --primary: #0891b2;
+  --primary-foreground: #ffffff;
+  --secondary: #f59e0b;
+  --secondary-foreground: #ffffff;
+  --muted: #f9fafb;
+  --muted-foreground: #4b5563;
+  --accent: #f59e0b;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #f9fafb;
+  --ring: rgba(8, 145, 178, 0.5);
+  --chart-1: #0891b2;
+  --chart-2: #f59e0b;
+  --chart-3: #dc2626;
+  --chart-4: #059669;
+  --chart-5: #4b5563;
+  --radius: 0.5rem;
+  /* Updated sidebar colors to match design brief */
+  --sidebar: #f9fafb;
+  --sidebar-foreground: #4b5563;
+  --sidebar-primary: #0891b2;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f59e0b;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: rgba(8, 145, 178, 0.5);
+  /* Black tooltips as requested */
+  --tooltip: #000000;
+  --tooltip-foreground: #ffffff;
+}
+
+.dark {
+  /* Updated dark mode colors to complement the design brief */
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card: #1e293b;
+  --card-foreground: #f1f5f9;
+  --popover: #1e293b;
+  --popover-foreground: #f1f5f9;
+  --primary: #0ea5e9;
+  --primary-foreground: #0f172a;
+  --secondary: #fbbf24;
+  --secondary-foreground: #0f172a;
+  --muted: #334155;
+  --muted-foreground: #94a3b8;
+  --accent: #fbbf24;
+  --accent-foreground: #0f172a;
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+  --border: #334155;
+  --input: #334155;
+  --ring: rgba(14, 165, 233, 0.5);
+  --chart-1: #0ea5e9;
+  --chart-2: #fbbf24;
+  --chart-3: #f87171;
+  --chart-4: #34d399;
+  --chart-5: #a78bfa;
+  /* Dark grey menu backgrounds */
+  --sidebar: #374151;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #0ea5e9;
+  --sidebar-primary-foreground: #0f172a;
+  --sidebar-accent: #fbbf24;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #4b5563;
+  --sidebar-ring: rgba(14, 165, 233, 0.5);
+  /* Black tooltips in dark mode */
+  --tooltip: #000000;
+  --tooltip-foreground: #ffffff;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  /* Added tooltip color tokens */
+  --color-tooltip: var(--tooltip);
+  --color-tooltip-foreground: var(--tooltip-foreground);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    /* Making canvas grid dots more visible with darker color and larger size */
+    @apply text-foreground;
+    background: #f8fafc;
+    background-image: radial-gradient(circle at 1px 1px, rgba(51, 65, 85, 1.0) 2.5px, transparent 0);
+    background-size: 20px 20px;
+  }
+}
+
+/* Enhanced dark mode canvas background with brighter dots for better visibility */
+.dark body {
+  background: #0f172a;
+  background-image: radial-gradient(circle at 1px 1px, rgba(203, 213, 225, 1.0) 2.5px, transparent 0);
+  background-size: 20px 20px;
+}
+
+/* Added TLDraw integration styles */
+.tldraw__editor {
+  background: transparent !important;
+}
+
+.tldraw__canvas {
+  background: transparent !important;
+}
+
+/* TLDraw UI customization */
+.tlui-toolbar {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+}
+
+.tlui-button {
+  color: var(--foreground) !important;
+}
+
+.tlui-button:hover {
+  background: var(--muted) !important;
+}
+
+.tlui-button[data-state="selected"] {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+/* Updated whiteboard canvas styles for better dark mode support */
+.whiteboard-canvas {
+  cursor: crosshair;
+  user-select: none;
+}
+
+.whiteboard-canvas.pan-mode {
+  cursor: grab;
+}
+
+.whiteboard-canvas.pan-mode:active {
+  cursor: grabbing;
+}
+
+.whiteboard-grid {
+  background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark .whiteboard-grid {
+  background-image: radial-gradient(circle, #4b5563 1px, transparent 1px);
+}
+
+.shape-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.collaboration-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Added tooltip styles with black background */
+.tooltip {
+  background-color: var(--tooltip);
+  color: var(--tooltip-foreground);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 50;
+}
+
+/* Add canvas background directly to TLDraw container with more visible dots */
+.tldraw {
+  background: #f8fafc;
+  background-image: radial-gradient(circle at 1px 1px, rgba(51, 65, 85, 0.9) 2.5px, transparent 0);
+  background-size: 20px 20px;
+}
+
+.dark .tldraw {
+  background: #0f172a;
+  background-image: radial-gradient(circle at 1px 1px, rgba(203, 213, 225, 0.9) 2.5px, transparent 0);
+  background-size: 20px 20px;
+}

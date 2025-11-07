@@ -4,6 +4,17 @@ import { groq } from "@ai-sdk/groq"
 
 export async function POST(request: NextRequest) {
   try {
+    // Check for API key
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json(
+        { 
+          error: "GROQ_API_KEY is not configured. Please add it to your .env.local file.",
+          setup: "Get your API key from https://console.groq.com/keys"
+        }, 
+        { status: 500 }
+      )
+    }
+
     const { elements, context, userIntent } = await request.json()
 
     const systemPrompt = `You are an AI assistant that provides smart suggestions for whiteboard improvements. Analyze the current whiteboard state and provide actionable suggestions.

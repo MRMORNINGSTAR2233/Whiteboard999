@@ -1,6 +1,6 @@
 export interface WhiteboardElement {
   id: string
-  type: "rectangle" | "circle" | "arrow" | "text" | "sticky-note" | "line" | "freehand" | "image"
+  type: "rectangle" | "circle" | "triangle" | "diamond" | "arrow" | "text" | "sticky-note" | "line" | "freehand" | "image"
   x: number
   y: number
   width: number
@@ -107,6 +107,7 @@ export type Tool =
   | "rectangle"
   | "circle"
   | "triangle"
+  | "diamond"
   | "arrow"
   | "text"
   | "sticky-note"

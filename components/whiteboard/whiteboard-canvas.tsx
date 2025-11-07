@@ -207,11 +207,11 @@ export function WhiteboardCanvas({
         drawArrow(ctx, element.width, element.height)
         break
       case "text":
-        ctx.font = `${element.style.fontWeight} ${element.style.fontSize}px ${element.style.fontFamily}`
+        ctx.font = `${element.style.fontWeight} ${element.style.fontSize || 14}px ${element.style.fontFamily}`
         ctx.fillStyle = element.style.stroke
         ctx.textAlign = "center"
         ctx.textBaseline = "middle"
-        ctx.fillText(element.content, element.width / 2, element.height / 2)
+        ctx.fillText(element.content || "", element.width / 2, element.height / 2)
         break
       case "line":
         ctx.beginPath()
@@ -265,7 +265,7 @@ export function WhiteboardCanvas({
         if (testWidth > maxWidth && n > 0) {
           ctx.fillText(line, element.width / 2, y)
           line = words[n] + " "
-          y += element.style.fontSize + 2
+          y += (element.style.fontSize || 14) + 2
         } else {
           line = testLine
         }
@@ -539,7 +539,7 @@ export function WhiteboardCanvas({
 
   const startTextEditing = (element: WhiteboardElement) => {
     setEditingElement(element.id)
-    setTextEditValue(element.content)
+    setTextEditValue(element.content || "")
     setTimeout(() => {
       textInputRef.current?.focus()
       textInputRef.current?.select()
@@ -913,6 +913,8 @@ export function WhiteboardCanvas({
               setTextEditValue("")
             }
           }}
+          aria-label="Edit element text"
+          placeholder="Enter text"
           className="absolute z-50 px-2 py-1 text-sm border border-blue-500 rounded bg-white"
           style={{
             left: `${(elements.find((el) => el.id === editingElement)?.x || 0) * zoom + pan.x * zoom}px`,
@@ -949,10 +951,18 @@ export function WhiteboardCanvas({
         </div>
       )}
 
-      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+      <input 
+        ref={fileInputRef} 
+        type="file" 
+        accept="image/*" 
+        onChange={handleImageUpload} 
+        className="hidden"
+        aria-label="Upload image file"
+      />
 
       <LiveCursors cursors={mockCursors} containerRef={containerRef} />
-      <CommentMarkers comments={comments} onCommentClick={handleCommentClick} onResolveComment={handleResolveComment} />
+      {/* CommentMarkers disabled - needs backend integration */}
+      {/* <CommentMarkers comments={comments} onCommentClick={handleCommentClick} onResolveComment={handleResolveComment} /> */}
 
       {showAIPanel && (
         <div className="absolute top-4 right-4">

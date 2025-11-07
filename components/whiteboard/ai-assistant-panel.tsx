@@ -41,11 +41,13 @@ export function AIAssistantPanel({ onGenerate, onClose, isOpen }: AIAssistantPan
   const [selectedLanguage, setSelectedLanguage] = useState("en")
   const [includeAnalysis, setIncludeAnalysis] = useState(false)
   const [includeDocumentation, setIncludeDocumentation] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return
 
     setIsGenerating(true)
+    setError(null)
     try {
       await onGenerate(prompt, {
         language: selectedLanguage,
@@ -57,6 +59,9 @@ export function AIAssistantPanel({ onGenerate, onClose, isOpen }: AIAssistantPan
       setSelectedType(null)
       setShowQuestions(false)
       onClose()
+    } catch (err: any) {
+      console.error("[AI Assistant] Generation failed:", err)
+      setError(err.message || "Failed to generate diagram. Please check your API key configuration.")
     } finally {
       setIsGenerating(false)
     }
@@ -449,6 +454,39 @@ For superior results, include:
                   onChange={(e) => setPrompt(e.target.value)}
                   className="min-h-[120px] resize-none border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 />
+
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <X className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-red-900">Error</p>
+                        <p className="text-xs text-red-700 mt-1">{error}</p>
+                        {error.includes("API key") && (
+                          <p className="text-xs text-red-600 mt-2">
+                            Please add your GROQ_API_KEY to .env.local file. Get your key from{" "}
+                            <a
+                              href="https://console.groq.com/keys"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline font-medium"
+                            >
+                              console.groq.com/keys
+                            </a>
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setError(null)}
+                        className="h-6 w-6 p-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 {(includeAnalysis || includeDocumentation) && (
                   <div className="flex flex-wrap gap-2">

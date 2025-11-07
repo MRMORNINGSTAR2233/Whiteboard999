@@ -4,6 +4,17 @@ import { groq } from "@ai-sdk/groq"
 
 export async function POST(request: NextRequest) {
   try {
+    // Check for API key
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json(
+        { 
+          error: "GROQ_API_KEY is not configured. Please add it to your .env.local file.",
+          setup: "Get your API key from https://console.groq.com/keys"
+        }, 
+        { status: 500 }
+      )
+    }
+
     const { contentType, context, prompt } = await request.json()
 
     if (!contentType) {

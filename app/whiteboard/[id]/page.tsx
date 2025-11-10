@@ -2,12 +2,14 @@
 
 import { useState, useCallback, useEffect } from "react"
 import dynamic from "next/dynamic"
+import { createShapeId } from "tldraw"
 import { AIAssistantPanel } from "@/components/whiteboard/ai-assistant-panel"
 import { ExportPanel } from "@/components/whiteboard/export-panel"
 import { CollaborationPanel } from "@/components/whiteboard/collaboration-panel"
 import { ShapeLibraryPanel } from "@/components/whiteboard/shape-library-panel"
 import { CustomToolbar } from "@/components/whiteboard/custom-toolbar"
 import { FormattingToolbar } from "@/components/whiteboard/formatting-toolbar"
+import { ShareDialog } from "@/components/whiteboard/share-dialog"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
@@ -18,10 +20,6 @@ const TldrawComponent = dynamic(() => import("tldraw").then((mod) => ({ default:
   ssr: false,
   loading: () => <LoadingScreen />,
 })
-
-const createShapeId = dynamic(() => import("tldraw").then((mod) => ({ default: mod.createShapeId })), { ssr: false })
-
-const TldrawCSS = dynamic(() => import("tldraw/tldraw.css"), { ssr: false })
 
 const LoadingScreen = () => (
   <div className="flex items-center justify-center h-full bg-gray-50">
@@ -50,16 +48,39 @@ export default function WhiteboardPage() {
   const [showFormattingToolbar, setShowFormattingToolbar] = useState(false)
   const { toast } = useToast()
 
+  // Load whiteboard from database
   useEffect(() => {
-    console.log(`[v0] Loading whiteboard with ID: ${whiteboardId}`)
-    const timer = setTimeout(() => {
-      console.log("[v0] TLDraw components loaded successfully")
-      console.log("[v0] Canvas background should now be visible with dot grid pattern")
-      setIsLoading(false)
-    }, 1000)
+    const loadWhiteboard = async () => {
+      try {
+        const response = await fetch(`/api/whiteboards/${whiteboardId}`)
+        
+        if (!response.ok) {
+          throw new Error("Failed to load whiteboard")
+        }
 
-    return () => clearTimeout(timer)
-  }, [whiteboardId])
+        const { whiteboard } = await response.json()
+        
+        // Store whiteboard data for later use
+        if (whiteboard.data && editor) {
+          editor.store.loadSnapshot(whiteboard.data)
+        }
+        
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Failed to load whiteboard:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load whiteboard",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+      }
+    }
+
+    if (whiteboardId) {
+      loadWhiteboard()
+    }
+  }, [whiteboardId, editor, toast])
 
   const uiOverrides = {
     tools(editor: any, tools: any) {
@@ -121,32 +142,28 @@ export default function WhiteboardPage() {
 
       editor.on("change", handleSelectionChange)
 
-      const handleChange = () => {
+      // Auto-save to database
+      const handleChange = async () => {
         const snapshot = editor.store.getSnapshot()
-        localStorage.setItem(`tldraw-autosave-${whiteboardId}`, JSON.stringify(snapshot))
+        
+        try {
+          await fetch(`/api/whiteboards/${whiteboardId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: snapshot }),
+          })
+        } catch (error) {
+          console.error("Failed to auto-save:", error)
+        }
       }
 
       let timeoutId: NodeJS.Timeout
       const debouncedSave = () => {
         clearTimeout(timeoutId)
-        timeoutId = setTimeout(handleChange, 1000)
+        timeoutId = setTimeout(handleChange, 2000) // Save every 2 seconds
       }
 
       editor.store.listen(debouncedSave)
-
-      try {
-        const saved = localStorage.getItem(`tldraw-autosave-${whiteboardId}`)
-        if (saved) {
-          const snapshot = JSON.parse(saved)
-          editor.store.loadSnapshot(snapshot)
-          toast({
-            title: "Session Restored",
-            description: "Your previous work has been loaded",
-          })
-        }
-      } catch (error) {
-        console.error("Failed to load saved data:", error)
-      }
 
       const handleKeyDown = (e: KeyboardEvent) => {
         if ((e.key === "Delete" || e.key === "Backspace") && !e.ctrlKey && !e.metaKey) {
@@ -652,74 +669,7 @@ export default function WhiteboardPage() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [isPresentationMode, exitPresentationMode])
 
-  const ShareDialog = () =>
-    showShareDialog && (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-96 max-w-[90vw]">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Share Whiteboard</h3>
-            <button
-              onClick={() => setShowShareDialog(false)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Close
-            </button>
-          </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Share Link</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={window.location.href}
-                  readOnly
-                  className="flex-1 px-3 py-2 border rounded-md text-sm"
-                />
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href)
-                    toast({ title: "Link Copied", description: "Share link copied to clipboard" })
-                  }}
-                  className="bg-transparent text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-md"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                className="flex-1 bg-transparent text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-md"
-                onClick={() => {
-                  const subject = "Check out this AI Whiteboard"
-                  const body = `I'd like to share this whiteboard with you: ${window.location.href}`
-                  window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`)
-                }}
-              >
-                Email
-              </button>
-              <button
-                className="flex-1 bg-transparent text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-md"
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator
-                      .share({
-                        title: "AI Whiteboard",
-                        text: "Check out this whiteboard",
-                        url: window.location.href,
-                      })
-                      .catch(console.log)
-                  }
-                }}
-              >
-                Share
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
 
   if (isLoading) {
     return (
@@ -855,7 +805,12 @@ export default function WhiteboardPage() {
           <AIAssistantPanel onGenerate={handleAIGenerate} onClose={() => setShowAIPanel(false)} isOpen={showAIPanel} />
         )}
 
-        <ShareDialog />
+        {showShareDialog && (
+          <ShareDialog
+            whiteboardId={whiteboardId}
+            onClose={() => setShowShareDialog(false)}
+          />
+        )}
       </div>
       <Toaster />
     </ThemeProvider>

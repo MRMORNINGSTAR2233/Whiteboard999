@@ -50,3 +50,5 @@ Thumbs.db
 
 # Misc
 .turbo
+
+/lib/generated/prisma

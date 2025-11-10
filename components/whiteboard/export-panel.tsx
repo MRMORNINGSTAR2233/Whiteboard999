@@ -13,7 +13,7 @@ import { Download, Share2, Link, Mail, X } from "lucide-react"
 import type { WhiteboardElement } from "@/types/whiteboard"
 
 interface ExportPanelProps {
-  elements: WhiteboardElement[]
+  elements?: WhiteboardElement[]
   onExport: (format: "png" | "svg" | "pdf" | "json") => void
   onClose: () => void
 }

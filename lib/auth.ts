@@ -75,6 +75,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session
     },
+    async signIn({ user, account, profile }) {
+      // Update lastLoginAt timestamp on successful sign in
+      if (user.id) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        })
+      }
+      return true
+    },
   },
   events: {
     async createUser({ user }) {

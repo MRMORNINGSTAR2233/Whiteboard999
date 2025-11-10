@@ -18,11 +18,23 @@ async function seedDatabase() {
     
     const password = await bcrypt.hash('password123', 10)
     
+    // Create admin user
+    const adminUser = await prisma.user.create({
+      data: {
+        email: 'admin@example.com',
+        name: 'Admin User',
+        emailVerified: new Date(),
+        role: 'ADMIN',
+      },
+    })
+    console.log(`✅ Created admin user: ${adminUser.email}`)
+    
     const user1 = await prisma.user.create({
       data: {
         email: 'demo@example.com',
         name: 'Demo User',
         emailVerified: new Date(),
+        role: 'USER',
       },
     })
     console.log(`✅ Created user: ${user1.email}`)
@@ -32,6 +44,7 @@ async function seedDatabase() {
         email: 'john@example.com',
         name: 'John Doe',
         emailVerified: new Date(),
+        role: 'USER',
       },
     })
     console.log(`✅ Created user: ${user2.email}`)
@@ -41,6 +54,7 @@ async function seedDatabase() {
         email: 'jane@example.com',
         name: 'Jane Smith',
         emailVerified: new Date(),
+        role: 'USER',
       },
     })
     console.log(`✅ Created user: ${user3.email}`)
@@ -116,10 +130,14 @@ async function seedDatabase() {
 
     console.log('\n✨ Database seeded successfully!')
     console.log('\n📝 Sample credentials:')
+    console.log('Admin: admin@example.com (role: ADMIN)')
     console.log('Email: demo@example.com')
     console.log('Email: john@example.com')
     console.log('Email: jane@example.com')
     console.log('Password: password123 (for all users)')
+    console.log('\n💡 To manually promote a user to admin, run:')
+    console.log('npx prisma studio')
+    console.log('Then edit the user record and change role to "ADMIN"')
     
   } catch (error) {
     console.error('❌ Error seeding database:', error)

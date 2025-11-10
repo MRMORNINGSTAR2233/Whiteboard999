@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
-export default auth((req) => {
+export default auth(async (req) => {
   const { pathname } = req.nextUrl
   const isAuthenticated = !!req.auth
 
@@ -27,6 +28,23 @@ export default auth((req) => {
   // Redirect authenticated users away from auth pages
   if (isAuthenticated && (pathname.startsWith("/auth/signin") || pathname.startsWith("/auth/signup"))) {
     return NextResponse.redirect(new URL("/", req.url))
+  }
+
+  // Check admin access for admin routes
+  if (isAuthenticated && pathname.startsWith("/admin")) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.auth.user.id },
+        select: { role: true }
+      })
+      
+      if (user?.role !== "ADMIN") {
+        return NextResponse.redirect(new URL("/", req.url))
+      }
+    } catch (error) {
+      console.error("Error checking admin role:", error)
+      return NextResponse.redirect(new URL("/", req.url))
+    }
   }
 
   return NextResponse.next()

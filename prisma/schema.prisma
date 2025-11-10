@@ -17,6 +17,8 @@ model User {
   name          String?
   image         String?
   emailVerified DateTime?
+  role          Role         @default(USER)
+  lastLoginAt   DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   
@@ -97,6 +99,12 @@ model CommentReply {
 enum Permission {
   VIEW
   EDIT
+  ADMIN
+}
+
+// Role enum
+enum Role {
+  USER
   ADMIN
 }
 

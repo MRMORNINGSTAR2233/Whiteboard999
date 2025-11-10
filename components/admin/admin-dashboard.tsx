@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminSidebar } from "./admin-sidebar"
 import { AdminHeader } from "./admin-header"
 import { DashboardOverview } from "./dashboard-overview"
@@ -12,23 +12,43 @@ import { AIInsights } from "./ai-insights"
 
 export function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("overview")
+  const [stats, setStats] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchStats()
+  }, [])
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("/api/admin/stats")
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch stats:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
-        return <DashboardOverview />
+        return <DashboardOverview stats={stats} loading={loading} />
       case "users":
         return <UserManagement />
       case "boards":
         return <BoardManagement />
       case "analytics":
-        return <AnalyticsPanel />
+        return <AnalyticsPanel stats={stats} loading={loading} />
       case "ai-insights":
         return <AIInsights />
       case "settings":
         return <SystemSettings />
       default:
-        return <DashboardOverview />
+        return <DashboardOverview stats={stats} loading={loading} />
     }
   }
 

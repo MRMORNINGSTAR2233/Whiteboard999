@@ -37,8 +37,8 @@ export async function POST(
 
     // Check if user has access to whiteboard
     const hasAccess =
-      comment.whiteboard.ownerId === session.user.id ||
-      comment.whiteboard.shares.some((share) => share.userId === session.user.id)
+      comment.whiteboard.ownerId === session.user?.id ||
+      comment.whiteboard.shares.some((share: any) => share.userId === session.user?.id)
 
     if (!hasAccess) {
       return NextResponse.json(

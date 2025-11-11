@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
           createdAt: { gte: oneDayAgo },
           userId: { not: null },
         },
-      }).then((result) => result.length),
+      }).then((result: any) => result.length),
       prisma.analyticsEvent.groupBy({
         by: ["userId"],
         where: {
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
           createdAt: { gte: oneWeekAgo },
           userId: { not: null },
         },
-      }).then((result) => result.length),
+      }).then((result: any) => result.length),
       prisma.analyticsEvent.groupBy({
         by: ["userId"],
         where: {
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
           createdAt: { gte: oneMonthAgo },
           userId: { not: null },
         },
-      }).then((result) => result.length),
+      }).then((result: any) => result.length),
       prisma.analyticsEvent.count({
         where: {
           eventType: { in: ["collaboration_join", "collaboration_leave"] },
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
         whiteboardCreation,
         aiUsage,
       },
-      topFeatures: topFeatures.map((f) => ({
+      topFeatures: topFeatures.map((f: any) => ({
         feature: f.eventType,
         usageCount: f._count.eventType,
       })),

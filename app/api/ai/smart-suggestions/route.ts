@@ -42,7 +42,7 @@ Return a JSON object with:
 }`
 
     const elementsDescription =
-      elements?.map((el) => `${el.type}: "${el.content}" at (${el.x}, ${el.y})`).join(", ") || "No elements"
+      elements?.map((el: any) => `${el.type}: "${el.content}" at (${el.x}, ${el.y})`).join(", ") || "No elements"
 
     const { text } = await generateText({
       model: groq("llama-3.1-70b-versatile"),

@@ -8,14 +8,14 @@ export async function GET(request: NextRequest) {
     const session = await requireAuth()
 
     let onboarding = await prisma.userOnboarding.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: session.user?.id || "" },
     })
 
     // Create onboarding record if it doesn't exist
     if (!onboarding) {
       onboarding = await prisma.userOnboarding.create({
         data: {
-          userId: session.user.id,
+          userId: session.user?.id || "",
         },
       })
     }
@@ -71,10 +71,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     const onboarding = await prisma.userOnboarding.upsert({
-      where: { userId: session.user.id },
+      where: { userId: session.user?.id || "" },
       update: updates,
       create: {
-        userId: session.user.id,
+        userId: session.user?.id || "",
         ...updates,
       },
     })

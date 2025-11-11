@@ -39,7 +39,7 @@ export async function DELETE(
 
     // Create audit log
     await createAuditLog(
-      session.user.id,
+      session.user?.id || "",
       "delete_whiteboard",
       "whiteboard",
       whiteboardId,

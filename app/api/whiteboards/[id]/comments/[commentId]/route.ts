@@ -36,11 +36,11 @@ export async function PATCH(
     }
 
     // Check if user is author or has edit permission
-    const isAuthor = comment.authorId === session.user.id
+    const isAuthor = comment.authorId === session.user?.id
     const hasEditPermission =
-      comment.whiteboard.ownerId === session.user.id ||
+      comment.whiteboard.ownerId === session.user?.id ||
       comment.whiteboard.shares.some(
-        (share) => share.userId === session.user.id && share.permission === "EDIT"
+        (share: any) => share.userId === session.user?.id && share.permission === "EDIT"
       )
 
     if (!isAuthor && !hasEditPermission) {
@@ -124,8 +124,8 @@ export async function DELETE(
 
     // Only author or whiteboard owner can delete
     const canDelete =
-      comment.authorId === session.user.id ||
-      comment.whiteboard.ownerId === session.user.id
+      comment.authorId === session.user?.id ||
+      comment.whiteboard.ownerId === session.user?.id
 
     if (!canDelete) {
       return NextResponse.json(

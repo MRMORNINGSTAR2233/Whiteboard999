@@ -104,7 +104,7 @@ export async function POST(
     }
 
     // Return file
-    return new NextResponse(content, {
+    return new NextResponse(content as BodyInit, {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${filename}"`,

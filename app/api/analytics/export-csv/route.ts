@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     // Convert to CSV
     const headers = ["Date", "Event Type", "User Email", "User Name", "Event Data", "Metadata"]
-    const rows = events.map((event) => [
+    const rows = events.map((event: any) => [
       event.createdAt.toISOString(),
       event.eventType,
       event.user?.email || "Anonymous",
@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
 
     const csv = [
       headers.join(","),
-      ...rows.map((row) =>
-        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+      ...rows.map((row: any) =>
+        row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
       ),
     ].join("\n")
 

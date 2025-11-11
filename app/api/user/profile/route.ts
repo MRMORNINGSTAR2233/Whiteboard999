@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     
     // Fetch user data with statistics
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: session.user?.id || "" },
       include: {
         _count: {
           select: {
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     
     // Update lastLoginAt timestamp
     await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: session.user?.id || "" },
       data: { lastLoginAt: new Date() },
     })
     
@@ -103,7 +103,7 @@ export async function PATCH(request: NextRequest) {
     
     // Update user profile
     const updatedUser = await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: session.user?.id || "" },
       data: {
         ...(name !== undefined && { name }),
         ...(image !== undefined && { image }),

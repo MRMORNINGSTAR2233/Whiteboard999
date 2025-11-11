@@ -52,8 +52,8 @@ export async function GET(
 
     // Check if user has access
     const hasAccess =
-      whiteboard.ownerId === session.user.id ||
-      whiteboard.shares.some((share) => share.userId === session.user.id)
+      whiteboard.ownerId === session.user?.id ||
+      whiteboard.shares.some((share: any) => share.userId === session.user?.id)
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -102,9 +102,9 @@ export async function PATCH(
     }
 
     // Check if user has edit permission
-    const isOwner = whiteboard.ownerId === session.user.id
+    const isOwner = whiteboard.ownerId === session.user?.id
     const hasEditPermission = whiteboard.shares.some(
-      (share) => share.userId === session.user.id && share.permission === "EDIT"
+      (share: any) => share.userId === session.user?.id && share.permission === "EDIT"
     )
 
     if (!isOwner && !hasEditPermission) {
@@ -175,7 +175,7 @@ export async function DELETE(
     }
 
     // Only owner can delete
-    if (whiteboard.ownerId !== session.user.id) {
+    if (whiteboard.ownerId !== session.user?.id) {
       return NextResponse.json(
         { error: "Only the owner can delete this whiteboard" },
         { status: 403 }

@@ -33,8 +33,8 @@ export async function GET(
     }
 
     const hasAccess =
-      whiteboard.ownerId === session.user.id ||
-      whiteboard.shares.some((share) => share.userId === session.user.id)
+      whiteboard.ownerId === session.user?.id ||
+      whiteboard.shares.some((share: any) => share.userId === session.user?.id)
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -118,8 +118,8 @@ export async function POST(
     }
 
     const hasAccess =
-      whiteboard.ownerId === session.user.id ||
-      whiteboard.shares.some((share) => share.userId === session.user.id)
+      whiteboard.ownerId === session.user?.id ||
+      whiteboard.shares.some((share: any) => share.userId === session.user?.id)
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -144,7 +144,7 @@ export async function POST(
         x,
         y,
         whiteboardId: params.id,
-        authorId: session.user.id,
+        authorId: session.user?.id || "",
       },
       include: {
         author: {

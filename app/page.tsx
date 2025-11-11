@@ -611,10 +611,22 @@ export default function Home() {
         </main>
 
         {/* Modals */}
-        {showTemplates && <TemplateLibrary onClose={() => setShowTemplates(false)} />}
+        {showTemplates && (
+          <TemplateLibrary
+            isOpen={showTemplates}
+            onClose={() => setShowTemplates(false)}
+            onSelectTemplate={(template) => {
+              // Handle template selection - create whiteboard from template
+              handleCreateWhiteboard()
+              setShowTemplates(false)
+            }}
+          />
+        )}
         {showRenameModal && selectedWhiteboard && (
           <RenameModal
+            isOpen={showRenameModal}
             currentName={selectedWhiteboard.name}
+            currentIcon={selectedWhiteboard.icon}
             onRename={handleRename}
             onClose={() => {
               setShowRenameModal(false)
@@ -622,7 +634,20 @@ export default function Home() {
             }}
           />
         )}
-        {showImportModal && <ImportModal onClose={() => setShowImportModal(false)} />}
+        {showImportModal && (
+          <ImportModal
+            isOpen={showImportModal}
+            onClose={() => setShowImportModal(false)}
+            onImportSuccess={() => {
+              fetchWhiteboards()
+              setShowImportModal(false)
+              toast({
+                title: "Success",
+                description: "Whiteboard imported successfully",
+              })
+            }}
+          />
+        )}
       </div>
       <Toaster />
     </ThemeProvider>

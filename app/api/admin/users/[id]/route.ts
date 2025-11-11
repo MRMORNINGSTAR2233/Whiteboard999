@@ -26,7 +26,7 @@ export async function PATCH(
     }
 
     // Prevent self-modification of critical fields
-    if (userId === session.user.id) {
+    if (userId === session.user?.id) {
       if (body.role && body.role !== currentUser.role) {
         return NextResponse.json(
           { error: "Cannot change your own role" },
@@ -51,7 +51,7 @@ export async function PATCH(
 
       if (body.status === "SUSPENDED") {
         updates.suspendedAt = new Date()
-        updates.suspendedBy = session.user.id
+        updates.suspendedBy = session.user?.id
         changes.suspendedAt = { from: null, to: new Date() }
       } else if (body.status === "ACTIVE") {
         updates.suspendedAt = null
@@ -99,7 +99,7 @@ export async function PATCH(
       : "update_user"
 
     await createAuditLog(
-      session.user.id,
+      session.user?.id || "",
       action as any,
       "user",
       userId,
@@ -136,7 +136,7 @@ export async function DELETE(
     const userId = params.id
 
     // Prevent self-deletion
-    if (userId === session.user.id) {
+    if (userId === session.user?.id) {
       return NextResponse.json(
         { error: "Cannot delete your own account" },
         { status: 403 }
@@ -174,7 +174,7 @@ export async function DELETE(
 
     // Create audit log
     await createAuditLog(
-      session.user.id,
+      session.user?.id || "",
       "delete_user",
       "user",
       userId,

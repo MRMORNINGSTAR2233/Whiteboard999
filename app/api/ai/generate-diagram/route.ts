@@ -157,7 +157,7 @@ BUSINESS REQUIREMENTS:
 
     cleanedText = cleanedText.trim()
 
-    let diagramData
+    let diagramData: any
     try {
       diagramData = JSON.parse(cleanedText)
 

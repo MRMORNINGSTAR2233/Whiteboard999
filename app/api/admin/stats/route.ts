@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         recentUsers,
         recentWhiteboards,
       },
-      activeUsers: activeUsers.map((user) => ({
+      activeUsers: activeUsers.map((user: any) => ({
         id: user.id,
         name: user.name,
         email: user.email,
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
         commentCount: user._count.comments,
         createdAt: user.createdAt,
       })),
-      popularWhiteboards: popularWhiteboards.map((wb) => ({
+      popularWhiteboards: popularWhiteboards.map((wb: any) => ({
         id: wb.id,
         name: wb.name,
         owner: wb.owner,

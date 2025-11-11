@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     const zipBuffer = await zip.generateAsync({ type: "nodebuffer" })
 
     // Return ZIP file
-    return new NextResponse(zipBuffer, {
+    return new NextResponse(zipBuffer as BodyInit, {
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="whiteboards-${format}-${Date.now()}.zip"`,

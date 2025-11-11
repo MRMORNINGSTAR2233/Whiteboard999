@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     
     // Get user info for presence channels
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: session.user?.id || "" },
       select: {
         id: true,
         name: true,
@@ -43,11 +43,11 @@ export async function POST(request: NextRequest) {
         where: {
           id: whiteboardId,
           OR: [
-            { ownerId: session.user.id },
+            { ownerId: session.user?.id },
             {
               shares: {
                 some: {
-                  userId: session.user.id,
+                  userId: session.user?.id,
                 },
               },
             },

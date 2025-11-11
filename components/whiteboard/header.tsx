@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PresenceIndicator } from "./presence-indicator"
+import { ConnectionStatus } from "./connection-status"
 import {
   Share2,
   Settings,
@@ -91,6 +92,8 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-2">
+        <ConnectionStatus />
+        
         {/* File operations section */}
         <div className="flex items-center gap-1 mr-2">
           <Button
@@ -145,7 +148,7 @@ export function Header({
           </Button>
         </div>
 
-        <PresenceIndicator users={[]} />
+        <PresenceIndicator whiteboardId="demo" />
 
         <Button
           variant="outline"

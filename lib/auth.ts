@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
+import { trackEvent } from "@/lib/analytics"
 import bcrypt from "bcryptjs"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -82,6 +83,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { id: user.id },
           data: { lastLoginAt: new Date() },
         })
+        
+        // Track login event
+        await trackEvent("user_login", user.id, {
+          provider: account?.provider || "credentials",
+        })
       }
       return true
     },
@@ -89,6 +95,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   events: {
     async createUser({ user }) {
       console.log("New user created:", user.email)
+      
+      // Track signup event
+      if (user.id) {
+        await trackEvent("user_signup", user.id)
+      }
     },
   },
 })

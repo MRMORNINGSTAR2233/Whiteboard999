@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { trackEvent } from "@/lib/analytics"
 
 // GET /api/whiteboards - List all whiteboards for authenticated user
 export async function GET(request: NextRequest) {
@@ -116,6 +117,12 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    })
+
+    // Track whiteboard creation
+    await trackEvent("whiteboard_create", session.user.id, {
+      whiteboardId: whiteboard.id,
+      name: whiteboard.name,
     })
 
     return NextResponse.json({ whiteboard }, { status: 201 })

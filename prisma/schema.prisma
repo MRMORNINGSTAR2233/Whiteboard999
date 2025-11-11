@@ -18,6 +18,9 @@ model User {
   image         String?
   emailVerified DateTime?
   role          Role         @default(USER)
+  status        UserStatus   @default(ACTIVE)
+  suspendedAt   DateTime?
+  suspendedBy   String?
   lastLoginAt   DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -27,6 +30,9 @@ model User {
   whiteboards   Whiteboard[]
   comments      Comment[]
   shares        WhiteboardShare[]
+  onboarding    UserOnboarding?
+  analyticsEvents AnalyticsEvent[]
+  auditLogs     AuditLog[]
 }
 
 // Whiteboard model for storing canvas data
@@ -106,6 +112,70 @@ enum Permission {
 enum Role {
   USER
   ADMIN
+}
+
+// User status enum
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+// Analytics event tracking
+model AnalyticsEvent {
+  id          String    @id @default(cuid())
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  eventType   String    // login, whiteboard_create, ai_generate, export, etc.
+  eventData   Json      // Additional event-specific data
+  metadata    Json?     // Browser, location, etc.
+  createdAt   DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+// Audit log for admin actions
+model AuditLog {
+  id          String    @id @default(cuid())
+  actorId     String
+  actor       User      @relation(fields: [actorId], references: [id])
+  action      String    // suspend_user, change_role, delete_whiteboard, etc.
+  targetType  String    // user, whiteboard, system
+  targetId    String?
+  changes     Json      // Before/after values
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+  
+  @@index([actorId])
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}
+
+// System settings
+model SystemSettings {
+  id          String    @id @default(cuid())
+  key         String    @unique
+  value       Json
+  updatedBy   String
+  updatedAt   DateTime  @updatedAt
+}
+
+// User onboarding progress
+model UserOnboarding {
+  id                        String    @id @default(cuid())
+  userId                    String    @unique
+  user                      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  welcomeCompleted          Boolean   @default(false)
+  createWhiteboardCompleted Boolean   @default(false)
+  aiFeaturesCompleted       Boolean   @default(false)
+  collaborationCompleted    Boolean   @default(false)
+  sharingCompleted          Boolean   @default(false)
+  completedAt               DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 }
 
 // NextAuth models

@@ -152,33 +152,33 @@
     - Allow resolving comments
     - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 8. Implement real-time collaboration with Pusher
-  - [ ] 8.1 Set up Pusher account and install SDK
+- [x] 8. Implement real-time collaboration with Pusher
+  - [x] 8.1 Set up Pusher account and install SDK
     - Install pusher and pusher-js packages
     - Configure Pusher credentials in .env.local
     - Create Pusher client utility
     - _Requirements: 4.1, 4.5_
   
-  - [ ] 8.2 Create presence channel for user tracking
+  - [x] 8.2 Create presence channel for user tracking
     - Subscribe to presence-whiteboard-{id} channel
     - Broadcast user join/leave events
     - Track connected users
     - _Requirements: 4.2, 4.4_
   
-  - [ ] 8.3 Implement cursor position synchronization
+  - [x] 8.3 Implement cursor position synchronization
     - Broadcast cursor-move events on mouse move
     - Render other users' cursors with names
     - Use color coding for different users
     - _Requirements: 4.2_
   
-  - [ ] 8.4 Implement shape synchronization
+  - [x] 8.4 Implement shape synchronization
     - Broadcast shape-create, shape-update, shape-delete events
     - Listen for remote shape changes
     - Apply changes to local TLDraw instance
     - Handle conflicts with last-write-wins
     - _Requirements: 4.1, 4.3_
   
-  - [ ] 8.5 Add connection status indicator
+  - [x] 8.5 Add connection status indicator
     - Show online/offline status
     - Display reconnecting state
     - Auto-reconnect on connection loss

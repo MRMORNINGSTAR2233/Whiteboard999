@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { requireAuth } from "@/lib/clerk-auth"
 import { prisma } from "@/lib/prisma"
 
 // GET /api/whiteboards/[id] - Get a single whiteboard
@@ -8,9 +8,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -78,9 +78,9 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -154,9 +154,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
+import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,7 +60,7 @@ interface Whiteboard {
 }
 
 export default function Home() {
-  const { data: session, status } = useSession()
+  const { user, isLoaded } = useUser()
   const router = useRouter()
   const { toast } = useToast()
 
@@ -77,12 +77,12 @@ export default function Home() {
 
   // Fetch whiteboards from API
   useEffect(() => {
-    if (status === "authenticated") {
+    if (isLoaded && user) {
       fetchWhiteboards()
-    } else if (status === "unauthenticated") {
-      router.push("/auth/signin")
+    } else if (isLoaded && !user) {
+      router.push("/sign-in")
     }
-  }, [status, router])
+  }, [isLoaded, user, router])
 
   const fetchWhiteboards = async () => {
     try {
@@ -122,7 +122,7 @@ export default function Home() {
 
   // Refetch when tab or search changes
   useEffect(() => {
-    if (status === "authenticated") {
+    if (isLoaded && user) {
       fetchWhiteboards()
     }
   }, [activeTab, searchQuery])
@@ -293,7 +293,7 @@ export default function Home() {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
   }
 
-  if (status === "loading" || isLoading) {
+  if (!isLoaded || isLoading) {
     return (
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <div className="min-h-screen flex items-center justify-center">

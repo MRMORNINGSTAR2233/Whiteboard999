@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { requireAuth } from "@/lib/clerk-auth"
 import { prisma } from "@/lib/prisma"
+import { sendWhiteboardShareEmail } from "@/lib/email"
 
 // POST /api/whiteboards/[id]/share - Share whiteboard with a user
 export async function POST(
@@ -8,9 +9,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -107,8 +108,15 @@ export async function POST(
       },
     })
 
-    // TODO: Send email notification
-    // await sendShareNotification(userToShare.email, whiteboard.name, session.user.name)
+    // Send email notification
+    await sendWhiteboardShareEmail(
+      userToShare.email,
+      userToShare.name || userToShare.email,
+      whiteboard.name,
+      whiteboardId,
+      session.user?.name || "A user",
+      permission
+    )
 
     return NextResponse.json({ share }, { status: 201 })
   } catch (error) {
@@ -126,9 +134,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -187,9 +195,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

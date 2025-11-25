@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { requireAuth } from "@/lib/clerk-auth"
 import { prisma } from "@/lib/prisma"
+import { sendCommentNotificationEmail } from "@/lib/email"
 
 // GET /api/whiteboards/[id]/comments - Get all comments for a whiteboard
 export async function GET(
@@ -8,9 +9,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -93,9 +94,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -156,7 +157,64 @@ export async function POST(
           },
         },
         replies: true,
+        whiteboard: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            shares: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
+    })
+
+    // Send email notifications to whiteboard owner and collaborators
+    const recipients = new Set<{ email: string; name: string; id: string }>()
+    
+    // Add owner
+    if (comment.whiteboard.owner.id !== session.user?.id) {
+      recipients.add({
+        email: comment.whiteboard.owner.email,
+        name: comment.whiteboard.owner.name || comment.whiteboard.owner.email,
+        id: comment.whiteboard.owner.id,
+      })
+    }
+    
+    // Add collaborators
+    comment.whiteboard.shares.forEach((share) => {
+      if (share.user.id !== session.user?.id) {
+        recipients.add({
+          email: share.user.email,
+          name: share.user.name || share.user.email,
+          id: share.user.id,
+        })
+      }
+    })
+
+    // Send notifications
+    recipients.forEach(async (recipient) => {
+      await sendCommentNotificationEmail(
+        recipient.email,
+        recipient.name,
+        comment.whiteboard.name,
+        params.id,
+        comment.author.name || comment.author.email,
+        content
+      )
     })
 
     return NextResponse.json({ comment }, { status: 201 })

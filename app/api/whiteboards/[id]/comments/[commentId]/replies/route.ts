@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { requireAuth } from "@/lib/clerk-auth"
 import { prisma } from "@/lib/prisma"
 
 // POST /api/whiteboards/[id]/comments/[commentId]/replies - Add a reply to a comment
@@ -8,9 +8,9 @@ export async function POST(
   { params }: { params: { id: string; commentId: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -37,8 +37,8 @@ export async function POST(
 
     // Check if user has access to whiteboard
     const hasAccess =
-      comment.whiteboard.ownerId === session.user?.id ||
-      comment.whiteboard.shares.some((share: any) => share.userId === session.user?.id)
+      comment.whiteboard.ownerId === user.id ||
+      comment.whiteboard.shares.some((share: any) => share.userId === user.id)
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -61,7 +61,7 @@ export async function POST(
       data: {
         content,
         commentId: params.commentId,
-        authorId: session.user.id,
+        authorId: user.id,
       },
     })
 

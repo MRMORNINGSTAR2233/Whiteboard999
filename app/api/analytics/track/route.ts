@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { requireAuth } from "@/lib/clerk-auth"
 import { trackEvent, getRequestMetadata } from "@/lib/analytics"
 import type { AnalyticsEventType, AnalyticsEventData } from "@/types/analytics"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
     const body = await request.json()
     
     const { eventType, eventData } = body as {
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // Track the event
     await trackEvent(
       eventType,
-      session?.user?.id,
+      user.id,
       eventData,
       metadata
     )

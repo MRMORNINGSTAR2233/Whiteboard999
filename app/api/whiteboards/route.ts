@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { requireAuth } from "@/lib/clerk-auth"
 import { prisma } from "@/lib/prisma"
 import { trackEvent } from "@/lib/analytics"
 
 // GET /api/whiteboards - List all whiteboards for authenticated user
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -81,9 +81,9 @@ export async function GET(request: NextRequest) {
 // POST /api/whiteboards - Create a new whiteboard
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
         name,
         icon: icon || "🔶",
         data: data || {},
-        ownerId: session.user.id,
+        ownerId: user.id,
       },
       include: {
         owner: {
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Track whiteboard creation
-    await trackEvent("whiteboard_create", session.user.id, {
+    await trackEvent("whiteboard_create", user.id, {
       whiteboardId: whiteboard.id,
       name: whiteboard.name,
     })

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { requireAuth } from "@/lib/clerk-auth"
 import { prisma } from "@/lib/prisma"
 import { trackEvent } from "@/lib/analytics"
 import { exportToMarkdown } from "@/lib/exporters/markdown"
@@ -11,9 +11,9 @@ import type { BatchExportRequest } from "@/types/export"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -35,11 +35,11 @@ export async function POST(request: NextRequest) {
       where: {
         id: { in: whiteboardIds },
         OR: [
-          { ownerId: session.user.id },
+          { ownerId: user.id },
           {
             shares: {
               some: {
-                userId: session.user.id,
+                userId: user.id,
               },
             },
           },
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Track batch export event
-    await trackEvent("whiteboard_export", session.user.id, {
+    await trackEvent("whiteboard_export", user.id, {
       whiteboardIds,
       format,
       count: whiteboards.length,

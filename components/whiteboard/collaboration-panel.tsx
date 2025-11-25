@@ -32,44 +32,34 @@ interface Comment {
 
 interface CollaborationPanelProps {
   onClose: () => void
+  users?: Array<{ id: string; name: string; avatar?: string }>
+  isConnected?: boolean
+  connectionStatus?: string
 }
 
-export function CollaborationPanel({ onClose }: CollaborationPanelProps) {
+export function CollaborationPanel({ onClose, users: connectedUsers, isConnected, connectionStatus }: CollaborationPanelProps) {
   const [activeTab, setActiveTab] = useState<"users" | "comments">("users")
   const [newComment, setNewComment] = useState("")
-  const [users] = useState<User[]>([
-    {
-      id: "1",
-      name: "You",
-      avatar: "",
-      role: "owner",
-      status: "online",
-      cursor: { x: 100, y: 100, color: "#3b82f6" },
-    },
-    {
-      id: "2",
-      name: "Alice Johnson",
-      avatar: "",
-      role: "editor",
-      status: "online",
-      cursor: { x: 200, y: 150, color: "#10b981" },
-    },
-    {
-      id: "3",
-      name: "Bob Smith",
-      avatar: "",
-      role: "viewer",
-      status: "away",
-    },
-    {
-      id: "4",
-      name: "Carol Davis",
-      avatar: "",
-      role: "editor",
-      status: "online",
-      cursor: { x: 300, y: 200, color: "#f59e0b" },
-    },
-  ])
+  
+  // Use real users if provided, otherwise mock data for demo
+  const [users] = useState<User[]>(
+    connectedUsers?.map(user => ({
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar || "",
+      role: "editor" as const,
+      status: "online" as const,
+    })) || [
+      {
+        id: "1",
+        name: "You",
+        avatar: "",
+        role: "owner",
+        status: "online",
+        cursor: { x: 100, y: 100, color: "#3b82f6" },
+      },
+    ]
+  )
   const [comments, setComments] = useState<Comment[]>([])
 
   const handleAddComment = () => {
@@ -206,7 +196,11 @@ export function CollaborationPanel({ onClose }: CollaborationPanelProps) {
                         <span className="text-xs text-muted-foreground capitalize">{user.role}</span>
                         {user.cursor && (
                           <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: user.cursor.color }} />
+                            <div 
+                              className="w-2 h-2 rounded-full" 
+                              data-color={user.cursor.color}
+                              style={{ backgroundColor: user.cursor.color } as React.CSSProperties}
+                            />
                             <span className="text-xs text-muted-foreground">Active</span>
                           </div>
                         )}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { requireAuth } from "@/lib/clerk-auth"
 import { prisma } from "@/lib/prisma"
 
 // PATCH /api/whiteboards/[id]/comments/[commentId] - Update a comment
@@ -8,9 +8,9 @@ export async function PATCH(
   { params }: { params: { id: string; commentId: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -36,11 +36,11 @@ export async function PATCH(
     }
 
     // Check if user is author or has edit permission
-    const isAuthor = comment.authorId === session.user?.id
+    const isAuthor = comment.authorId === user.id
     const hasEditPermission =
-      comment.whiteboard.ownerId === session.user?.id ||
+      comment.whiteboard.ownerId === user.id ||
       comment.whiteboard.shares.some(
-        (share: any) => share.userId === session.user?.id && share.permission === "EDIT"
+        (share: any) => share.userId === user.id && share.permission === "EDIT"
       )
 
     if (!isAuthor && !hasEditPermission) {
@@ -68,18 +68,7 @@ export async function PATCH(
             image: true,
           },
         },
-        replies: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
-            },
-          },
-        },
+        replies: true,
       },
     })
 
@@ -99,9 +88,9 @@ export async function DELETE(
   { params }: { params: { id: string; commentId: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
+    if (!user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -124,8 +113,8 @@ export async function DELETE(
 
     // Only author or whiteboard owner can delete
     const canDelete =
-      comment.authorId === session.user?.id ||
-      comment.whiteboard.ownerId === session.user?.id
+      comment.authorId === user.id ||
+      comment.whiteboard.ownerId === user.id
 
     if (!canDelete) {
       return NextResponse.json(

@@ -1,29 +1,36 @@
-import { auth } from "@/lib/auth"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
 
 /**
- * Requires authentication and returns the session
+ * Requires authentication and returns the user
  * @throws Error if user is not authenticated
  */
 export async function requireAuth() {
-  const session = await auth()
+  const { userId } = await auth()
   
-  if (!session?.user?.id) {
+  if (!userId) {
     throw new Error("Unauthorized")
   }
   
-  return session
+  const user = await currentUser()
+  
+  return {
+    id: userId,
+    email: user?.emailAddresses[0]?.emailAddress,
+    name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || null,
+    image: user?.imageUrl,
+  }
 }
 
 /**
- * Requires admin role and returns the session
+ * Requires admin role and returns the user
  * @throws Error if user is not authenticated or not an admin
  */
 export async function requireAdmin() {
-  const session = await requireAuth()
+  const currentUserData = await requireAuth()
   
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: currentUserData.id },
     select: { role: true }
   })
   
@@ -31,7 +38,7 @@ export async function requireAdmin() {
     throw new Error("Forbidden: Admin access required")
   }
   
-  return session
+  return currentUserData
 }
 
 /**

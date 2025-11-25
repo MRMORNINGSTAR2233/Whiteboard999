@@ -10,9 +10,15 @@ import { ShapeLibraryPanel } from "@/components/whiteboard/shape-library-panel"
 import { CustomToolbar } from "@/components/whiteboard/custom-toolbar"
 import { FormattingToolbar } from "@/components/whiteboard/formatting-toolbar"
 import { ShareDialog } from "@/components/whiteboard/share-dialog"
+import { ConnectionStatusIndicator } from "@/components/whiteboard/connection-status-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
+import { useCursorSync } from "@/hooks/use-cursor-sync"
+import { useShapeSync } from "@/hooks/use-shape-sync"
+import { usePresence } from "@/hooks/use-presence"
+import { useConnectionStatus } from "@/hooks/use-connection-status"
+import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 
@@ -34,6 +40,7 @@ const LoadingScreen = () => (
 export default function WhiteboardPage() {
   const params = useParams()
   const whiteboardId = params.id as string
+  const { user } = useUser()
   const [editor, setEditor] = useState<any | null>(null)
   const [showAIPanel, setShowAIPanel] = useState(false)
   const [showExportPanel, setShowExportPanel] = useState(false)
@@ -47,6 +54,56 @@ export default function WhiteboardPage() {
   const [formattingToolbarPosition, setFormattingToolbarPosition] = useState({ x: 0, y: 0 })
   const [showFormattingToolbar, setShowFormattingToolbar] = useState(false)
   const { toast } = useToast()
+
+  // Real-time collaboration hooks
+  const currentUserId = session?.user?.id || ""
+  const currentUserName = session?.user?.name || "Anonymous"
+  const currentUserAvatar = session?.user?.image || undefined
+  
+  const { cursors, broadcastCursor } = useCursorSync(whiteboardId, currentUserId)
+  const { users, isConnected } = usePresence(whiteboardId)
+  const connectionStatus = useConnectionStatus()
+  
+  // Shape sync will be initialized after editor is ready
+  useShapeSync(whiteboardId, currentUserId, editor)
+
+  // Broadcast cursor position on mouse move
+  useEffect(() => {
+    if (!editor) return
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const point = editor.screenToPage({ x: e.clientX, y: e.clientY })
+      broadcastCursor(point.x, point.y, currentUserName, currentUserAvatar)
+    }
+
+    const container = editor.getContainer()
+    container.addEventListener("pointermove", handlePointerMove)
+
+    return () => {
+      container.removeEventListener("pointermove", handlePointerMove)
+    }
+  }, [editor, broadcastCursor, currentUserName, currentUserAvatar])
+
+  // Join/leave presence on mount/unmount
+  useEffect(() => {
+    if (!session?.user?.id) return
+
+    // Join presence
+    fetch(`/api/whiteboards/${whiteboardId}/presence`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "join", status: "active" }),
+    })
+
+    // Leave presence on unmount
+    return () => {
+      fetch(`/api/whiteboards/${whiteboardId}/presence`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "leave" }),
+      })
+    }
+  }, [whiteboardId, session?.user?.id])
 
   // Load whiteboard from database
   useEffect(() => {
@@ -725,6 +782,9 @@ export default function WhiteboardPage() {
                 Back to Whiteboards
               </Link>
               <div className="text-sm text-muted-foreground">Whiteboard ID: {whiteboardId}</div>
+              <div className="ml-auto">
+                <ConnectionStatusIndicator status={connectionStatus} userCount={users.length} />
+              </div>
             </div>
             <CustomToolbar
               onExport={() => setShowExportPanel(!showExportPanel)}
@@ -796,7 +856,12 @@ export default function WhiteboardPage() {
 
           {!isPresentationMode && showCollaborationPanel && (
             <div className="w-80 border-l border-border bg-background">
-              <CollaborationPanel onClose={() => setShowCollaborationPanel(false)} />
+              <CollaborationPanel 
+                onClose={() => setShowCollaborationPanel(false)} 
+                users={users}
+                isConnected={isConnected}
+                connectionStatus={connectionStatus}
+              />
             </div>
           )}
         </div>

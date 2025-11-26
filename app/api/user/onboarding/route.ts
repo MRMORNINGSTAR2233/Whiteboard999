@@ -5,17 +5,17 @@ import { prisma } from "@/lib/prisma"
 // GET /api/user/onboarding - Get onboarding status
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth()
+    const user = await requireAuth()
 
     let onboarding = await prisma.userOnboarding.findUnique({
-      where: { userId: session.user?.id || "" },
+      where: { userId: user.id },
     })
 
     // Create onboarding record if it doesn't exist
     if (!onboarding) {
       onboarding = await prisma.userOnboarding.create({
         data: {
-          userId: session.user?.id || "",
+          userId: user.id,
         },
       })
     }
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 // PATCH /api/user/onboarding - Update onboarding status
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await requireAuth()
+    const user = await requireAuth()
     const body = await request.json()
 
     const updates: any = {}
@@ -71,10 +71,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     const onboarding = await prisma.userOnboarding.upsert({
-      where: { userId: session.user?.id || "" },
+      where: { userId: user.id },
       update: updates,
       create: {
-        userId: session.user?.id || "",
+        userId: user.id,
         ...updates,
       },
     })

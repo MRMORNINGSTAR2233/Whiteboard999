@@ -9,7 +9,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireAdmin()
+    const user = await requireAdmin()
     const body = await request.json()
     const userId = params.id
 
@@ -26,7 +26,7 @@ export async function PATCH(
     }
 
     // Prevent self-modification of critical fields
-    if (userId === session.user?.id) {
+    if (userId === user.id) {
       if (body.role && body.role !== currentUser.role) {
         return NextResponse.json(
           { error: "Cannot change your own role" },
@@ -51,7 +51,7 @@ export async function PATCH(
 
       if (body.status === "SUSPENDED") {
         updates.suspendedAt = new Date()
-        updates.suspendedBy = session.user?.id
+        updates.suspendedBy = user.id
         changes.suspendedAt = { from: null, to: new Date() }
       } else if (body.status === "ACTIVE") {
         updates.suspendedAt = null
@@ -99,7 +99,7 @@ export async function PATCH(
       : "update_user"
 
     await createAuditLog(
-      session.user?.id || "",
+      user.id,
       action as any,
       "user",
       userId,
@@ -132,11 +132,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireAdmin()
+    const adminUser = await requireAdmin()
     const userId = params.id
 
     // Prevent self-deletion
-    if (userId === session.user?.id) {
+    if (userId === adminUser.id) {
       return NextResponse.json(
         { error: "Cannot delete your own account" },
         { status: 403 }
@@ -144,7 +144,7 @@ export async function DELETE(
     }
 
     // Get user data before deletion
-    const user = await prisma.user.findUnique({
+    const targetUser = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -154,7 +154,7 @@ export async function DELETE(
       },
     })
 
-    if (!user) {
+    if (!targetUser) {
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
@@ -174,14 +174,14 @@ export async function DELETE(
 
     // Create audit log
     await createAuditLog(
-      session.user?.id || "",
+      adminUser.id,
       "delete_user",
       "user",
       userId,
       {
-        email: user.email,
-        name: user.name,
-        role: user.role,
+        email: targetUser.email,
+        name: targetUser.name,
+        role: targetUser.role,
       },
       request
     )

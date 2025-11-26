@@ -71,27 +71,29 @@ export function useShapeSync(
     })
 
     // Listen to local editor changes
-    const handleChange = (changes: any) => {
+    const handleChange = (event: any) => {
       if (isApplyingRemoteChange.current) return
 
-      const { added, updated, removed } = changes
+      const { changes } = event
+      if (!changes) return
+
+      const added = Object.values(changes.added || {})
+      const updated = Object.values(changes.updated || {}).map((change: any) => change[1])
+      const removed = Object.values(changes.removed || {})
 
       // Broadcast created shapes
-      if (Object.keys(added).length > 0) {
-        const records = Object.values(added) as TLRecord[]
-        broadcastShapeChange("create", records)
+      if (added.length > 0) {
+        broadcastShapeChange("create", added as TLRecord[])
       }
 
       // Broadcast updated shapes
-      if (Object.keys(updated).length > 0) {
-        const records = Object.entries(updated).map(([id, [from, to]]) => to) as TLRecord[]
-        broadcastShapeChange("update", records)
+      if (updated.length > 0) {
+        broadcastShapeChange("update", updated as TLRecord[])
       }
 
       // Broadcast deleted shapes
-      if (Object.keys(removed).length > 0) {
-        const records = Object.values(removed) as TLRecord[]
-        broadcastShapeChange("delete", records)
+      if (removed.length > 0) {
+        broadcastShapeChange("delete", removed as TLRecord[])
       }
     }
 

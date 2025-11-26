@@ -34,8 +34,8 @@ export async function GET(
     }
 
     const hasAccess =
-      whiteboard.ownerId === session.user?.id ||
-      whiteboard.shares.some((share: any) => share.userId === session.user?.id)
+      whiteboard.ownerId === user.id ||
+      whiteboard.shares.some((share: any) => share.userId === user.id)
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -119,8 +119,8 @@ export async function POST(
     }
 
     const hasAccess =
-      whiteboard.ownerId === session.user?.id ||
-      whiteboard.shares.some((share: any) => share.userId === session.user?.id)
+      whiteboard.ownerId === user.id ||
+      whiteboard.shares.some((share: any) => share.userId === user.id)
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -145,7 +145,7 @@ export async function POST(
         x,
         y,
         whiteboardId: params.id,
-        authorId: session.user?.id || "",
+        authorId: user.id,
       },
       include: {
         author: {
@@ -186,7 +186,7 @@ export async function POST(
     const recipients = new Set<{ email: string; name: string; id: string }>()
     
     // Add owner
-    if (comment.whiteboard.owner.id !== session.user?.id) {
+    if (comment.whiteboard.owner.id !== user.id) {
       recipients.add({
         email: comment.whiteboard.owner.email,
         name: comment.whiteboard.owner.name || comment.whiteboard.owner.email,
@@ -196,7 +196,7 @@ export async function POST(
     
     // Add collaborators
     comment.whiteboard.shares.forEach((share) => {
-      if (share.user.id !== session.user?.id) {
+      if (share.user.id !== user.id) {
         recipients.add({
           email: share.user.email,
           name: share.user.name || share.user.email,

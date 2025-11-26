@@ -9,7 +9,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireAdmin()
+    const user = await requireAdmin()
     const whiteboardId = params.id
 
     // Get whiteboard data before deletion
@@ -39,7 +39,7 @@ export async function DELETE(
 
     // Create audit log
     await createAuditLog(
-      session.user?.id || "",
+      user.id,
       "delete_whiteboard",
       "whiteboard",
       whiteboardId,

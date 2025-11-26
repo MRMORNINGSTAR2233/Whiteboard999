@@ -30,7 +30,7 @@ export async function POST(
     }
 
     // Only owner can share
-    if (whiteboard.ownerId !== session.user?.id) {
+    if (whiteboard.ownerId !== user.id) {
       return NextResponse.json(
         { error: "Only the owner can share this whiteboard" },
         { status: 403 }
@@ -113,8 +113,8 @@ export async function POST(
       userToShare.email,
       userToShare.name || userToShare.email,
       whiteboard.name,
-      whiteboardId,
-      session.user?.name || "A user",
+      params.id,
+      user.name || "A user",
       permission
     )
 
@@ -155,7 +155,7 @@ export async function DELETE(
     }
 
     // Only owner can remove shares
-    if (whiteboard.ownerId !== session.user?.id) {
+    if (whiteboard.ownerId !== user.id) {
       return NextResponse.json(
         { error: "Only the owner can remove access" },
         { status: 403 }
@@ -239,8 +239,8 @@ export async function GET(
 
     // Check if user has access
     const hasAccess =
-      whiteboard.ownerId === session.user?.id ||
-      whiteboard.shares.some((share: any) => share.userId === session.user?.id)
+      whiteboard.ownerId === user.id ||
+      whiteboard.shares.some((share: any) => share.userId === user.id)
 
     if (!hasAccess) {
       return NextResponse.json(

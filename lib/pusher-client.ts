@@ -12,11 +12,6 @@ export function getPusherClient(): Pusher {
     pusherClient = new Pusher(process.env.NEXT_PUBLIC_PUSHER_APP_KEY!, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
       authEndpoint: "/api/pusher/auth",
-      auth: {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
     })
 
     // Enable logging in development

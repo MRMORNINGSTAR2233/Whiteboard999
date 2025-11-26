@@ -35,9 +35,10 @@ interface CollaborationPanelProps {
   users?: Array<{ id: string; name: string; avatar?: string }>
   isConnected?: boolean
   connectionStatus?: string
+  onInvite?: () => void
 }
 
-export function CollaborationPanel({ onClose, users: connectedUsers, isConnected, connectionStatus }: CollaborationPanelProps) {
+export function CollaborationPanel({ onClose, users: connectedUsers, isConnected, connectionStatus, onInvite }: CollaborationPanelProps) {
   const [activeTab, setActiveTab] = useState<"users" | "comments">("users")
   const [newComment, setNewComment] = useState("")
   
@@ -82,8 +83,9 @@ export function CollaborationPanel({ onClose, users: connectedUsers, isConnected
 
   const handleInvite = () => {
     console.log("[v0] Opening invite dialog")
-    // In a real app, this would open an invite modal or send invites
-    alert("Invite functionality would open here. Enter email addresses to invite collaborators.")
+    if (onInvite) {
+      onInvite()
+    }
   }
 
   const formatTimeAgo = (date: Date) => {

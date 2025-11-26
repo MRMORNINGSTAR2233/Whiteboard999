@@ -39,6 +39,13 @@ export function ConnectionStatusIndicator({ status, userCount = 0 }: ConnectionS
           variant: "destructive" as const,
           className: "bg-red-500/10 text-red-700 border-red-500/20",
         }
+      default:
+        return {
+          icon: <Wifi className="h-3 w-3" />,
+          text: "Unknown",
+          variant: "secondary" as const,
+          className: "bg-gray-500/10 text-gray-700 border-gray-500/20",
+        }
     }
   }
 

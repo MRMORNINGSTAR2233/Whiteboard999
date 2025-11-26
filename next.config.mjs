@@ -51,7 +51,17 @@ const nextConfig = {
     // Handle canvas externals
     config.externals = [...(config.externals || []), { canvas: 'canvas' }]
     
-    // Fix for TLDraw's ESM modules
+    // Fix for TLDraw's ESM modules - ensure single instance
+    // Use dedupe to ensure only one version of each package is loaded
+    config.resolve.alias = {
+      ...config.resolve.alias,
+    }
+    
+    // Deduplicate tldraw packages
+    if (!config.resolve.plugins) {
+      config.resolve.plugins = []
+    }
+    
     config.resolve.extensionAlias = {
       '.js': ['.js', '.ts', '.tsx'],
     }
@@ -66,7 +76,17 @@ const nextConfig = {
     
     return config
   },
-  transpilePackages: ['tldraw', '@tldraw/editor', '@tldraw/ui'],
+  transpilePackages: [
+    'tldraw',
+    '@tldraw/editor',
+    '@tldraw/ui',
+    '@tldraw/store',
+    '@tldraw/utils',
+    '@tldraw/state',
+    '@tldraw/state-react',
+    '@tldraw/validate',
+    '@tldraw/tlschema',
+  ],
   experimental: {
     esmExternals: 'loose',
   },

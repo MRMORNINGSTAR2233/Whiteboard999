@@ -51,8 +51,8 @@ export async function POST(
       )
     }
 
-    // Get user info
-    const user = await prisma.user.findUnique({
+    // Get user info, create if doesn't exist (for new Clerk users)
+    let user = await prisma.user.findUnique({
       where: { id: session.id },
       select: {
         id: true,
@@ -62,10 +62,20 @@ export async function POST(
     })
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      )
+      // Auto-create user from Clerk session data
+      user = await prisma.user.create({
+        data: {
+          id: session.id,
+          email: session.email || '',
+          name: session.name,
+          image: session.image,
+        },
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      })
     }
 
     // Broadcast presence update

@@ -4,11 +4,11 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAuth()
+    const authUser = await requireAuth()
     
     // Fetch user data with statistics
-    const user = await prisma.user.findUnique({
-      where: { id: session.user?.id || "" },
+    let user = await prisma.user.findUnique({
+      where: { id: authUser.id },
       include: {
         _count: {
           select: {
@@ -20,16 +20,30 @@ export async function GET(request: NextRequest) {
       },
     })
     
+    // If user doesn't exist in database, create it from Clerk data
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      )
+      user = await prisma.user.create({
+        data: {
+          id: authUser.id,
+          email: authUser.email || '',
+          name: authUser.name,
+          image: authUser.image,
+        },
+        include: {
+          _count: {
+            select: {
+              whiteboards: true,
+              shares: true,
+              comments: true,
+            },
+          },
+        },
+      })
     }
     
     // Update lastLoginAt timestamp
     await prisma.user.update({
-      where: { id: session.user?.id || "" },
+      where: { id: authUser.id },
       data: { lastLoginAt: new Date() },
     })
     
@@ -40,7 +54,6 @@ export async function GET(request: NextRequest) {
       name: user.name,
       image: user.image,
       role: user.role,
-      emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt,
       stats: {
@@ -67,7 +80,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await requireAuth()
+    const authUser = await requireAuth()
     const body = await request.json()
     
     // Validate inputs
@@ -103,7 +116,7 @@ export async function PATCH(request: NextRequest) {
     
     // Update user profile
     const updatedUser = await prisma.user.update({
-      where: { id: session.user?.id || "" },
+      where: { id: authUser.id },
       data: {
         ...(name !== undefined && { name }),
         ...(image !== undefined && { image }),

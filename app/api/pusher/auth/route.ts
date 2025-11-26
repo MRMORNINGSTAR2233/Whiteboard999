@@ -5,10 +5,12 @@ import { prisma } from "@/lib/prisma"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAuth()
+    const authUser = await requireAuth()
     
-    const body = await request.json()
-    const { socket_id, channel_name } = body
+    // Pusher sends data as form-encoded, not JSON
+    const formData = await request.formData()
+    const socket_id = formData.get("socket_id") as string
+    const channel_name = formData.get("channel_name") as string
     
     if (!socket_id || !channel_name) {
       return NextResponse.json(
@@ -19,7 +21,7 @@ export async function POST(request: NextRequest) {
     
     // Get user info for presence channels
     const user = await prisma.user.findUnique({
-      where: { id: session.user?.id || "" },
+      where: { id: authUser.id },
       select: {
         id: true,
         name: true,
@@ -43,11 +45,11 @@ export async function POST(request: NextRequest) {
         where: {
           id: whiteboardId,
           OR: [
-            { ownerId: session.user?.id },
+            { ownerId: authUser.id },
             {
               shares: {
                 some: {
-                  userId: session.user?.id,
+                  userId: authUser.id,
                 },
               },
             },

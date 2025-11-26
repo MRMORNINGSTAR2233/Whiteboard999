@@ -23,11 +23,11 @@ export async function GET(request: NextRequest) {
     const whiteboards = await prisma.whiteboard.findMany({
       where: {
         OR: [
-          { ownerId: session.user.id },
+          { ownerId: user.id },
           {
             shares: {
               some: {
-                userId: session.user.id,
+                userId: user.id,
               },
             },
           },

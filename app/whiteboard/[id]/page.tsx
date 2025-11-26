@@ -56,9 +56,9 @@ export default function WhiteboardPage() {
   const { toast } = useToast()
 
   // Real-time collaboration hooks
-  const currentUserId = session?.user?.id || ""
-  const currentUserName = session?.user?.name || "Anonymous"
-  const currentUserAvatar = session?.user?.image || undefined
+  const currentUserId = user?.id || ""
+  const currentUserName = user?.fullName || user?.firstName || "Anonymous"
+  const currentUserAvatar = user?.imageUrl || undefined
   
   const { cursors, broadcastCursor } = useCursorSync(whiteboardId, currentUserId)
   const { users, isConnected } = usePresence(whiteboardId)
@@ -86,7 +86,7 @@ export default function WhiteboardPage() {
 
   // Join/leave presence on mount/unmount
   useEffect(() => {
-    if (!session?.user?.id) return
+    if (!user?.id) return
 
     // Join presence
     fetch(`/api/whiteboards/${whiteboardId}/presence`, {
@@ -103,7 +103,7 @@ export default function WhiteboardPage() {
         body: JSON.stringify({ action: "leave" }),
       })
     }
-  }, [whiteboardId, session?.user?.id])
+  }, [whiteboardId, user?.id])
 
   // Load whiteboard from database
   useEffect(() => {
@@ -119,7 +119,10 @@ export default function WhiteboardPage() {
         
         // Store whiteboard data for later use
         if (whiteboard.data && editor) {
-          editor.store.loadSnapshot(whiteboard.data)
+          // Load records from snapshot
+          if (whiteboard.data.records) {
+            editor.store.put(whiteboard.data.records)
+          }
         }
         
         setIsLoading(false)
@@ -199,28 +202,52 @@ export default function WhiteboardPage() {
 
       editor.on("change", handleSelectionChange)
 
-      // Auto-save to database
+      // Auto-save to database with proper debouncing and cancellation
+      let timeoutId: NodeJS.Timeout
+      let abortController: AbortController | null = null
+      
       const handleChange = async () => {
-        const snapshot = editor.store.getSnapshot()
-        
         try {
+          // Cancel any pending request
+          if (abortController) {
+            abortController.abort()
+          }
+          
+          // Create new abort controller for this request
+          abortController = new AbortController()
+          
+          // Get all records from the store
+          const allRecords = editor.store.allRecords()
+          const snapshot = {
+            records: allRecords,
+            schema: editor.store.schema.serialize()
+          }
+          
           await fetch(`/api/whiteboards/${whiteboardId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ data: snapshot }),
+            signal: abortController.signal,
           })
-        } catch (error) {
-          console.error("Failed to auto-save:", error)
+          
+          abortController = null
+        } catch (error: any) {
+          // Ignore abort errors (they're expected when debouncing)
+          if (error.name !== 'AbortError') {
+            console.error("Failed to auto-save:", error)
+          }
         }
       }
 
-      let timeoutId: NodeJS.Timeout
       const debouncedSave = () => {
         clearTimeout(timeoutId)
-        timeoutId = setTimeout(handleChange, 2000) // Save every 2 seconds
+        timeoutId = setTimeout(handleChange, 3000) // Save every 3 seconds
       }
 
-      editor.store.listen(debouncedSave)
+      const unsubscribe = editor.store.listen(debouncedSave, {
+        source: "user",
+        scope: "document",
+      })
 
       const handleKeyDown = (e: KeyboardEvent) => {
         if ((e.key === "Delete" || e.key === "Backspace") && !e.ctrlKey && !e.metaKey) {
@@ -271,6 +298,11 @@ export default function WhiteboardPage() {
         window.removeEventListener("keydown", handleKeyDown)
         editor.off("change", handleSelectionChange)
         clearTimeout(timeoutId)
+        unsubscribe()
+        // Cancel any pending save request
+        if (abortController) {
+          abortController.abort()
+        }
       }
     },
     [whiteboardId, showAIPanel, showExportPanel, showCollaborationPanel, showShapeLibrary, showStylePanel, toast],
@@ -474,7 +506,25 @@ export default function WhiteboardPage() {
           data.shapes.forEach((shapeData: any, index: number) => {
             const id = createShapeId()
 
-            if (shapeData.type === "arrow") {
+            if (shapeData.type === "text") {
+              // Handle text shapes - they don't use w/h props
+              const textShape = {
+                id,
+                type: "text",
+                x: shapeData.x || 200 + (index % 3) * 250,
+                y: shapeData.y || 100 + Math.floor(index / 3) * 150,
+                props: {
+                  text: shapeData.props?.text || "",
+                  color: shapeData.props?.color || "black",
+                  size: shapeData.props?.size || "m",
+                  font: shapeData.props?.font || "sans",
+                  align: shapeData.props?.align || "start",
+                  autoSize: true,
+                },
+              }
+              console.log("[v0] Creating text shape:", textShape)
+              editor.createShape(textShape)
+            } else if (shapeData.type === "arrow") {
               const arrow = {
                 id,
                 type: "arrow",
@@ -488,7 +538,6 @@ export default function WhiteboardPage() {
                   dash: shapeData.props?.dash || "solid",
                   arrowheadStart: shapeData.props?.arrowheadStart || "none",
                   arrowheadEnd: shapeData.props?.arrowheadEnd || "arrow",
-                  text: shapeData.props?.text || "",
                 },
               }
               console.log("[v0] Creating arrow:", arrow)
@@ -504,13 +553,12 @@ export default function WhiteboardPage() {
                 props: {
                   w: shapeData.props?.w || 150,
                   h: shapeData.props?.h || 80,
-                  geo: mappedGeo, // Use mapped geometry type
+                  geo: mappedGeo,
                   color: shapeData.props?.color || "blue",
                   fill: shapeData.props?.fill || "semi",
                   dash: shapeData.props?.dash || "solid",
                   size: shapeData.props?.size || "m",
                   font: shapeData.props?.font || "sans",
-                  text: shapeData.props?.text || `Element ${index + 1}`,
                   align: shapeData.props?.align || "middle",
                 },
               }
@@ -576,8 +624,12 @@ export default function WhiteboardPage() {
             }
             break
           case "json":
-            const snapshot = editor.store.getSnapshot()
-            const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
+            const allRecords = editor.store.allRecords()
+            const snapshotData = {
+              records: allRecords,
+              schema: editor.store.schema.serialize()
+            }
+            const blob = new Blob([JSON.stringify(snapshotData, null, 2)], {
               type: "application/json",
             })
             const url = URL.createObjectURL(blob)
@@ -861,6 +913,7 @@ export default function WhiteboardPage() {
                 users={users}
                 isConnected={isConnected}
                 connectionStatus={connectionStatus}
+                onInvite={() => setShowShareDialog(true)}
               />
             </div>
           )}
